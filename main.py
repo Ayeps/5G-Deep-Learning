@@ -136,6 +136,7 @@ y_test = np_utils.to_categorical(y_test, dimof_output)
 
 #TODO
 # scaling the features
+# feature selection
 
 ###### create the model
 
@@ -164,6 +165,10 @@ model = Sequential()
 
 #### model design
 
+#TODO
+# 1. adding autoencoders
+# 2. tuning parameters
+
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout
 
@@ -185,10 +190,6 @@ model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=
 
 
 ###### validate the model
-
-
-
-
 
 ###### test the model
 
