@@ -31,12 +31,44 @@ TODO David
 
 ###### importing the libraries
 
+## the first thing to do is always to import all the libraries that we will use in the code
+
 import pandas as pd
 from collections import Counter
 from sklearn.cross_validation import train_test_split
 import numpy as np
 from sklearn import preprocessing
 from keras.utils import np_utils
+
+
+
+
+"""
+
+There are many ways to load the dataset into our project, but the most used when you deal with CSV or TXT is pandas.
+It is really fast in the importing phase and has some functions in order to modify a bit the dataset based on your needs.
+
+With these kind of libraries you can also upload images, text, audio and whatever you want.
+Here an example in the case you will need it.
+
+from PIL import Image
+
+img = Image.open('path_to_the_image.format')
+
+TRASFORMING THE IMAGE IN ARRAY
+imagarray = np.asarray(img)
+
+SHAPE OF THE ARRAY
+imagarray.shape  --> (40, 40, 3) in case of images you have (height, width, RGB_value)
+
+FROM MATRIX TO ARRAY
+imagarray.ravel().shape
+
+For images it is better to use Keras (the deep learning library that we are going to use) functions that are used mainly for this reasons.
+Deep learning infact is really good with unstructure data (sound, text, images), but it is also good with structured data as our problem.
+
+"""
+
 
 ###### importing the dataset
 
@@ -54,9 +86,50 @@ col_names = ["duration","protocol_type","service","flag","src_bytes",
 
 dataset = pd.read_csv('./dataset_kdd/train_20.csv', delimiter=',',header=None, names=col_names, index_col=False)
 
-#print(dataset.head())
-#print(dataset.describe())
+"""
+Some useful functions to visualize the data:
 
+pandas libary
+
+THIRD ROW
+df.iloc[3]
+
+FIRST FIVE ROWS OF DURATION COLUMN
+df.loc[0:4, 'duration']
+
+MULTIPLE COLUMNS
+df[['duration', 'protocol']]
+
+SELECT THE ROWS WITH...
+df[df['duration'] > 70] --> CONDITION CAN BE COMBINED
+
+LIST OF TRUE AND FALSE
+df['duration'] > 70
+
+QUERY
+df.query("Age > 70")
+
+UNIQUE VALUES
+df['duration'].unique()
+
+SORTING
+df.sort_values('duration', ascending=False)
+
+matplotlib
+
+plt.plot(df)
+plt.title('Line Plot')
+plt.legend(['col1','col2','col2','col3'])
+plt.show()
+
+ANOTHER WAY, USING DIRECTLY PANDAS
+KIND: type of plot
+df.plot(kind='scatter', title='', )
+
+Visualize the data is really important and this is just one method.
+That's why I am used to export the dataset in Excel and then visualize it using tableau.
+
+"""
 
 ### Creating the excel file in order to visualize the data in tableau
 
