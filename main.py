@@ -306,6 +306,13 @@ from keras.layers.core import Dense, Dropout
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.metrics import confusion_matrix
+from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
+
+
+### callbacks to improve the model
+checkpointer = ModelCheckpoint(filepath='./models/weights.hdf5', verbose=1, save_best_only=True)
+earlystopper = EarlyStopping(monitor='val_loss', min_delta=0, patience=1, verbose=1, mode='auto')
+tensorboard = TensorBoard(log_dir='./models/tensorboard/') ### command for the bash: tensorboard --logdir='./models/tensorboard/'
 
 
 def build_model():
@@ -338,15 +345,18 @@ def build_model():
     return model
 
 
-## needs a build function
-model = KerasClassifier(build_fn=build_model, epochs=5, verbose=1)
-
-#### first method to do cross validation
-cv = KFold(3, shuffle=True)
-scores = cross_val_score(model, X_train, y_train, cv=cv)
+model = build_model()
 
 ### second method to do cross validation
-### model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose, validation_split=0.1)
+model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose, callbacks=[checkpointer, earlystopper, tensorboard])
+
+## needs a build function
+# model = KerasClassifier(build_fn=build_model, epochs=5, verbose=1)
+
+#### first method to do cross validation
+# cv = KFold(3, shuffle=True)
+# scores = cross_val_score(model, X_train, y_train, cv=cv)
+
 
 """
 BATCH SIZE
@@ -364,7 +374,15 @@ Small --> fast convergence
 
 ###### validate the model and tune the parameters
 
+"""
+we can tune many different things:
 
+    learning rate
+    optimizer
+    weights initialization
+    batch size...
+
+"""
 
 
 
@@ -397,7 +415,17 @@ def custom_confusion_matrix(y_true, y_pred, labels=["False", "True"]):
 
 print(custom_confusion_matrix(y_test, y_pred_classes, ['Attack', 'Normal']))
 
-loss_and_metrics = model.evaluate(X_test, y_test, batch_size=batch_size)
+result = model.evaluate(X_test, y_test, batch_size=batch_size)
+
+print(result)
+
+### visualizing the layers of the model
+print(model.layers)
+inp = model.layers[0].input
+out = model.layers[0].output
+
+print(inp) ### tensors
+print(out)
 
 
 #### MULTIPLE CLASS CLASSIFICATION
