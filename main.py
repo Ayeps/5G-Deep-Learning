@@ -29,6 +29,34 @@ TODO David
 
 """
 
+import numpy as np
+
+"""
+NUMPY -- is the library behind all these libraries that we are going to use. 
+It is really powerful in computation. Instead of using normal for cycles uses special
+methods to do the same task in few seconds instead of hours.
+
+A = np.array([[1,2,3],
+             [4,5,6]
+             [7,8,9]
+             [10,11,12]])
+             
+The shape is (4,3) --> 4 rows, 3 columns
+
+A[0] --> first row
+A[2,0] --> cell of the matrix
+A[:,0] --> : every row, the first element --> first column
+
+You can also do operations
+
+A * 3
+
+A + A... but, they must be of the same shape
+
+A.dot(A) --> dot product
+
+"""
+
 ###### importing the libraries
 
 ## the first thing to do is always to import all the libraries that we will use in the code
@@ -36,7 +64,7 @@ TODO David
 import pandas as pd
 from collections import Counter
 from sklearn.cross_validation import train_test_split
-import numpy as np
+
 from sklearn import preprocessing
 from keras.utils import np_utils
 
@@ -131,6 +159,20 @@ That's why I am used to export the dataset in Excel and then visualize it using 
 
 """
 
+"""
+another way to visualize the data is to use jupyter notebook, from the terminal is difficult to see all this plots
+
+_ = dataset.hist(figsize=(12,10))
+
+import seaborn as sns
+
+sns.pairplot(dataset, hue='Labels') --> in case of binary
+sns.heatmap(dataset.corr(), annot=True)
+
+
+"""
+
+
 ### Creating the excel file in order to visualize the data in tableau
 
 # TODO
@@ -144,7 +186,17 @@ exporting the dataset with just 2 classes, in order to see if there is a linear 
 
 #print(dataset['labels'].value_counts())
 
-### Dropping categorical features
+### Dropping categorical features (for now) --> Like this we can not use them.
+### We need one hot encoder -- when we modify something of the X_train is necessary to modify also something of X_test
+
+"""
+
+dataset_cat = pd.get_dummies(dataset)
+
+X = dataset_cat.iloc[:, :-1].astype(float).values ### all the columns a part from the last one
+y = dataset_cat.iloc[:, -1:].values #### all the columns starting from the last one
+
+"""
 
 num_features = [
     "duration","src_bytes",
@@ -164,17 +216,11 @@ num_features = [
 ### the problem is a binary classification problem -- we ahve to identify if is an attack or not. we don't care
 ### which is the type of the attack
 
+
 target = dataset['labels'].copy()
 target[target!='normal'] = 'attack'
 
-#X = dataset_num_features.iloc[:, :-1].values
-#y = dataset.iloc[:, -1:].values
-
-
-## variables = dataset.columns[dataset.columns != 'labels']
-
 X = dataset[num_features].astype(float).values
-#print(X)
 
 le = preprocessing.LabelEncoder()
 le.fit(target)
@@ -184,6 +230,27 @@ print(y)
 
 #print(X)
 #print(y)
+
+
+#### data preprocessing
+
+
+#TODO
+
+# feature selection
+
+
+#### feature scaling
+
+from sklearn.preprocessing import StandardScaler
+
+sc = StandardScaler()
+X = sc.fit_transform(X)
+
+### checking X
+print(X[:10])
+print(X.shape)
+
 
 ###### train - test split
 
@@ -203,14 +270,6 @@ print('dimof_output: ', dimof_output)
 y_train = np_utils.to_categorical(y_train, dimof_output)
 y_test = np_utils.to_categorical(y_test, dimof_output)
 
-
-#### data preprocessing
-
-
-#TODO
-# scaling the features
-# feature selection
-
 ###### create the model
 
 
@@ -220,7 +279,7 @@ y_test = np_utils.to_categorical(y_test, dimof_output)
 
 # Set constants
 batch_size = 128
-dimof_middle = 100
+dimof_middle = 100 ## number of units for each hidden layer
 dropout = 0.2
 count_of_epoch = 100
 verbose = 1
@@ -244,32 +303,122 @@ model = Sequential()
 
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import cross_val_score, KFold
+from sklearn.metrics import confusion_matrix
 
 
-### dimension of input is about the number of features (like in images where the number of features correspond to the number of pixels
-model = Sequential()
-model.add(Dense(dimof_middle, input_dim=dimof_input, kernel_initializer='uniform', activation='tanh'))
-model.add(Dropout(dropout))
-model.add(Dense(dimof_middle, kernel_initializer='uniform', activation='tanh'))
-model.add(Dropout(dropout))
-model.add(Dense(dimof_output, kernel_initializer='uniform', activation='softmax'))
+def build_model():
 
-#### training
+    ## sequential model because we add elements in a sequence
+    model = Sequential()
 
-model.compile(loss='mse', optimizer='sgd', metrics=['accuracy'])
+    ### dimension of input is about the number of features (like in images where the number of features correspond to the number of pixels
+    model.add(
+        Dense(dimof_middle, input_dim=dimof_input, kernel_initializer='uniform', activation='tanh'))  ## input layer
+    model.add(Dropout(dropout))
+    model.add(Dense(dimof_middle, kernel_initializer='uniform', activation='tanh'))
+    model.add(Dropout(dropout))
+    model.add(Dense(dimof_output, kernel_initializer='uniform', activation='softmax'))  ## output layer (in case of just 2 classes we can use sigmoid)
+    """
+    
+    managing dim_of_output
+    
+    """
 
-model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose)
+    model.summary()  ## we can check our model
+    ## (none, 1) as output, because we can predict the output of many elements at the same time
+
+    W, B = model.get_weights()  ## and get the weights of the model
+
+    #### COMPILE the model --> decide which loss and optimizer to use to train the model
+
+    model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy']) ### in case of multiple classes we have to use categorical_crossentropy
+
+    return model
+
+
+## needs a build function
+model = KerasClassifier(build_fn=build_model, epochs=5, verbose=1)
+
+#### first method to do cross validation
+cv = KFold(3, shuffle=True)
+scores = cross_val_score(model, X_train, y_train, cv=cv)
+
+### second method to do cross validation
+### model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose, validation_split=0.1)
+
+"""
+BATCH SIZE
+
+instead of passing one point by one (SGD), we pass a batch (16, 32, 64, 128) of points in order to speed up the computation 
+and avoid overfitting.
+
+What happens if we change the batch size?
+
+Big --> slow convergence
+
+Small --> fast convergence
+
+"""
+
+###### validate the model and tune the parameters
 
 
 
-###### validate the model
 
-###### test the model
+
+###### predict
+
+## exactly as in scikitlearn
+## model.predict(X_test).ravel() --> to flat the column into array
+
+
+### prediction, but are probabilities to belong to the class
+y_pred = model.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_test_classes = np.argmax(y_test, axis=1)
+
+
+#### classification report
+
+from sklearn.metrics import classification_report
+
+print(classification_report(y_test_classes, y_pred_classes))
+
+#### Confusion Matrix
+
+def custom_confusion_matrix(y_true, y_pred, labels=["False", "True"]):
+    cm = confusion_matrix(y_true, y_pred)
+    pred_labels = ["Predicted " + l for l in labels]
+    df = pd.DataFrame(cm, index=labels, columns=pred_labels)
+    return df
+
+
+print(custom_confusion_matrix(y_test, y_pred_classes, ['Attack', 'Normal']))
 
 loss_and_metrics = model.evaluate(X_test, y_test, batch_size=batch_size)
 
-classes = model.predict(X_test, batch_size=128)
+
+#### MULTIPLE CLASS CLASSIFICATION
+"""
+
+In the case that we have to separate all the different classes, 
+we need to define in output layer the number of classes.
+
+target_names = dataset['labels'].unique()
+print(target_names)
+
+target_dict = {n:i for i,n in enumerate(target_name)}
+print(target_dict)
+
+y = dataset['labels'].map(target_dict)
+print(y.head())
+
+y_cat = to_categorical(y)
+print(y_cat[:10]) ## first ten rows
 
 
+"""
 
 
