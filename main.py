@@ -68,7 +68,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn import preprocessing
 from keras.utils import np_utils
 
-
+import matplotlib.pyplot as plt
 
 
 """
@@ -320,11 +320,32 @@ def build_model():
     ## sequential model because we add elements in a sequence
     model = Sequential()
 
+    """
+    
+    we can also use dropout in the beginning
+    Dropout(0.2, input_shape=X_train.shape[1:]
+    
+    """
+
     ### dimension of input is about the number of features (like in images where the number of features correspond to the number of pixels
-    model.add(
-        Dense(dimof_middle, input_dim=dimof_input, kernel_initializer='uniform', activation='tanh'))  ## input layer
+    model.add(Dense(dimof_middle, input_dim=dimof_input, kernel_initializer='uniform', activation='tanh'))  ## input layer
+
+    ### it is also possible to add regularization into a layer --> kernel_regularize='l2'
+
     model.add(Dropout(dropout))
     model.add(Dense(dimof_middle, kernel_initializer='uniform', activation='tanh'))
+
+    """
+    
+    DROPOUT - avoid overfitting
+    
+    randomly killing some nodes at each iteration using a certain probability. It forces the network to see 
+    more robust features. The network will not focus on just few features, because it could happen that in the next iteration 
+    this feature will not be present.
+    
+    It is a parameter to tune (30%-60%)
+    
+    """
     model.add(Dropout(dropout))
     model.add(Dense(dimof_output, kernel_initializer='uniform', activation='softmax'))  ## output layer (in case of just 2 classes we can use sigmoid)
     """
@@ -347,8 +368,46 @@ def build_model():
 
 model = build_model()
 
+##### LEARNING CURVE ON THE NUMBER OF SAMPLES
+
+
+"""
+Before starting the tuning of the model and change it, it is better to see how many samples we need
+to perform better. After understanding the number of samples, we can start to design our model.
+
+"""
+
+from sklearn.model_selection import learning_curve
+initial_weights = model.get_weights()
+
+train_sizes = (len(X_train) * np.linspace(0.1, 0.99, 4)).astype(int) #### 4 different lenghts --> from 10% to 99%
+
+train_scores = []
+test_scores = []
+
+for train_size in train_sizes:
+    X_train_frac, _, y_train_frac, _ = train_test_split(X_train, y_train, train_size=train_size)
+    model.set_weights(initial_weights)
+
+    h = model.fit(X_train_frac, y_train_frac, verbose=1, epochs=10, callbacks=[EarlyStopping(monitor='loss', patience=1)])
+
+    r = model.evaluate(X_train_frac, y_train_frac, verbose=0)
+    train_scores.append(r[-1])
+
+    e = model.evaluate(X_test, y_test, verbose=0)
+    test_scores.append(e[-1])
+
+    print("Done size: ", train_size)ù
+
+
+plt.plot(train_sizes, train_scores, 'o-', label="Training Score")
+plt.plot(train_sizes, test_scores, 'o-', label="Test Score")
+plt.legend(loc='best')
+plt.show()
+
+
 ### second method to do cross validation
-model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose, callbacks=[checkpointer, earlystopper, tensorboard])
+##model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose, callbacks=[checkpointer, earlystopper, tensorboard])
 
 ## needs a build function
 # model = KerasClassifier(build_fn=build_model, epochs=5, verbose=1)
@@ -371,6 +430,91 @@ Big --> slow convergence
 Small --> fast convergence
 
 """
+"""
+BATCH NORMALIZATION
+
+In order to avoid overfitting
+
+"""
+
+from keras.layers import BatchNormalization
+
+def repeated_training(X_train, y_train, X_test, y_test, units=512, activation='sigmoid', optimizer='sgd', do_bn=False, epochs=10, repeats=3):
+
+    histories = []
+
+    for repeat in range(repeats):
+        K.clear_session()
+
+        model = Sequential()
+
+        ### first layer
+        model.add(Dense(units, input_shape=X_train.shape[1:], kernel_initializer='normal', activation=activation))
+
+        if do_bn:
+            model.add(BatchNormalization)
+
+        ### second layer
+        model.add(Dense(units, kernel_initializer='normal', activation=activation))
+
+        if do_bn:
+            model.add(BatchNormalization)
+
+        ### third layer
+        model.add(Dense(units, kernel_initializer='normal', activation=activation))
+
+        if do_bn:
+            model.add(BatchNormalization)
+
+        ### output layer
+        model.add(Dense(10, activation='softmax'))
+
+        model.compile(optimizer, 'categorical_crossentropy', metrics=['accuracy'])
+
+        h = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=epochs, verbose=0)
+
+        histories.append([h.history['acc'], h.history['val_acc']])
+        print(repeat, end=' ')
+
+    histories = np.array(histories)
+
+    mean_acc = histories.mean(axis=0)
+    std_acc = histories.std(axis=0)
+    print()
+
+    #### 0 --> training ::: 1 --> test
+    return mean_acc[0], std_acc[0], mean_acc[1], std_acc[1]
+
+
+#### Now we can compare between the model trained with batch normalization and the one without
+
+
+mean_acc, std_acc, mean_acc_val, std_acc_val = repeated_training(X_train, y_train, X_test, y_test, do_bn=False)
+
+mean_acc_bn, std_acc_bn, mean_acc_val_bn, std_acc_val_bn = repeated_training(X_train, y_train, X_test, y_test, do_bn=True)
+
+### and now we plot all the results
+### speed up the training and increase also generalization
+
+
+def plot_mean_std(m, s):
+    plt.plot(m)
+    plt.fill_between(range(len(m)), m-s, m+s, alpha=0.1)
+
+plot_mean_std(mean_acc, std_acc)
+plot_mean_std(mean_acc_val, std_acc_val)
+plot_mean_std(mean_acc_bn, std_acc_bn)
+plot_mean_std(mean_acc_val_bn, std_acc_val_bn)
+
+plt.ylim(0, 1.01)
+plt.title("Batch Normalization Accuracy")
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend(['Train', 'Test', 'Train_bn', 'Test_bn'])
+
+plt.show()
+
+
 
 ###### validate the model and tune the parameters
 
@@ -384,6 +528,11 @@ we can tune many different things:
 
 """
 
+#TODO
+
+# hyperparameter search
+
+# tune the parameters (gridsearch, random, bayesian... for keras)
 
 
 ###### predict
