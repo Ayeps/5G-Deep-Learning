@@ -10,25 +10,6 @@ TODO Filippo (bulshit initial things, that I will explain you later.)
 
 """
 
-
-"""
-TODO David
-
-1. download Anaconda Mac.
-2. create a python environment (version 3.5) (google it)
-3. activate the environment (using the terminal) and install these libraries:
-    
-    scikitlearn
-    tensorflow
-    pandas
-    keras
-    jupyter notebook
-
-4. download pycharm ce and clone the repo 
-5. change the interpreter of the project to the environment that you created before.
-
-"""
-
 import numpy as np
 
 """
@@ -37,8 +18,8 @@ It is really powerful in computation. Instead of using normal for cycles uses sp
 methods to do the same task in few seconds instead of hours.
 
 A = np.array([[1,2,3],
-             [4,5,6]
-             [7,8,9]
+             [4,5,6],
+             [7,8,9],
              [10,11,12]])
              
 The shape is (4,3) --> 4 rows, 3 columns
@@ -245,6 +226,8 @@ print(y)
 from sklearn.preprocessing import StandardScaler
 
 sc = StandardScaler()
+
+# transform just of X_train
 X = sc.fit_transform(X)
 
 ### checking X
@@ -301,7 +284,6 @@ model = Sequential()
 # 1. adding autoencoders
 # 2. tuning parameters
 
-from keras.models import Sequential
 from keras.layers.core import Dense, Dropout
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import cross_val_score, KFold
@@ -397,7 +379,7 @@ for train_size in train_sizes:
     e = model.evaluate(X_test, y_test, verbose=0)
     test_scores.append(e[-1])
 
-    print("Done size: ", train_size)ù
+    print("Done size: ", train_size)
 
 
 plt.plot(train_sizes, train_scores, 'o-', label="Training Score")
