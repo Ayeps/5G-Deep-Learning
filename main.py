@@ -3,13 +3,13 @@
 
 ##### INTRUSION DETECTION for 5G ARCHITECTURE
 
+### Ask for a more difficult task or implement the same thing in different libraries:
 
 """
-TODO Filippo (bulshit initial things, that I will explain you later.)
+TODO Filippo
 
-1. Importing the dataset -- In the beginning in order to speedup the computation
-2. Data visualization with tableau (I ll show you the sw next time)
-
+1. Importing the dataset
+2. Data visualization with tableau 
 """
 
 import numpy as np
