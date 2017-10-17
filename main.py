@@ -3,83 +3,16 @@
 
 ##### INTRUSION DETECTION for 5G ARCHITECTURE
 
-### Ask for a more difficult task or implement the same thing in different libraries:
-
-"""
-TODO Filippo
-
-1. Importing the dataset
-2. Data visualization with tableau 
-"""
+# importing the libraries
 
 import numpy as np
-
-"""
-NUMPY -- is the library behind all these libraries that we are going to use. 
-It is really powerful in computation. Instead of using normal for cycles uses special
-methods to do the same task in few seconds instead of hours.
-
-A = np.array([[1,2,3],
-             [4,5,6],
-             [7,8,9],
-             [10,11,12]])
-             
-The shape is (4,3) --> 4 rows, 3 columns
-
-A[0] --> first row
-A[2,0] --> cell of the matrix
-A[:,0] --> : every row, the first element --> first column
-
-You can also do operations
-
-A * 3
-
-A + A... but, they must be of the same shape
-
-A.dot(A) --> dot product
-
-"""
-
-###### importing the libraries
-
-## the first thing to do is always to import all the libraries that we will use in the code
-
 import pandas as pd
 from collections import Counter
 from sklearn.cross_validation import train_test_split
-
 from sklearn import preprocessing
 from keras.utils import np_utils
-
 import matplotlib.pyplot as plt
-
-
-"""
-
-There are many ways to load the dataset into our project, but the most used when you deal with CSV or TXT is pandas.
-It is really fast in the importing phase and has some functions in order to modify a bit the dataset based on your needs.
-
-With these kind of libraries you can also upload images, text, audio and whatever you want.
-Here an example in the case you will need it.
-
-from PIL import Image
-
-img = Image.open('path_to_the_image.format')
-
-TRASFORMING THE IMAGE IN ARRAY
-imagarray = np.asarray(img)
-
-SHAPE OF THE ARRAY
-imagarray.shape  --> (40, 40, 3) in case of images you have (height, width, RGB_value)
-
-FROM MATRIX TO ARRAY
-imagarray.ravel().shape
-
-For images it is better to use Keras (the deep learning library that we are going to use) functions that are used mainly for this reasons.
-Deep learning infact is really good with unstructure data (sound, text, images), but it is also good with structured data as our problem.
-
-"""
-
+from sklearn.metrics import classification_report
 
 ###### importing the dataset
 
@@ -97,89 +30,8 @@ col_names = ["duration","protocol_type","service","flag","src_bytes",
 
 dataset = pd.read_csv('./dataset_kdd/train_20.csv', delimiter=',',header=None, names=col_names, index_col=False)
 
-"""
-Some useful functions to visualize the data:
-
-pandas libary
-
-THIRD ROW
-df.iloc[3]
-
-FIRST FIVE ROWS OF DURATION COLUMN
-df.loc[0:4, 'duration']
-
-MULTIPLE COLUMNS
-df[['duration', 'protocol']]
-
-SELECT THE ROWS WITH...
-df[df['duration'] > 70] --> CONDITION CAN BE COMBINED
-
-LIST OF TRUE AND FALSE
-df['duration'] > 70
-
-QUERY
-df.query("Age > 70")
-
-UNIQUE VALUES
-df['duration'].unique()
-
-SORTING
-df.sort_values('duration', ascending=False)
-
-matplotlib
-
-plt.plot(df)
-plt.title('Line Plot')
-plt.legend(['col1','col2','col2','col3'])
-plt.show()
-
-ANOTHER WAY, USING DIRECTLY PANDAS
-KIND: type of plot
-df.plot(kind='scatter', title='', )
-
-Visualize the data is really important and this is just one method.
-That's why I am used to export the dataset in Excel and then visualize it using tableau.
-
-"""
-
-"""
-another way to visualize the data is to use jupyter notebook, from the terminal is difficult to see all this plots
-
-_ = dataset.hist(figsize=(12,10))
-
-import seaborn as sns
-
-sns.pairplot(dataset, hue='Labels') --> in case of binary
-sns.heatmap(dataset.corr(), annot=True)
-
-
-"""
-
-
-### Creating the excel file in order to visualize the data in tableau
-
-# TODO
-"""
-exporting the dataset with just 2 classes, in order to see if there is a linear correlation between the features
-
-"""
-# dataset.to_excel('train.xlsx')
-
-### counting the number of instances for each class
-
-#print(dataset['labels'].value_counts())
-
-### Dropping categorical features (for now) --> Like this we can not use them.
-### We need one hot encoder -- when we modify something of the X_train is necessary to modify also something of X_test
-
-"""
-
-dataset_cat = pd.get_dummies(dataset)
-
-X = dataset_cat.iloc[:, :-1].astype(float).values ### all the columns a part from the last one
-y = dataset_cat.iloc[:, -1:].values #### all the columns starting from the last one
-
-"""
+# Considering that the categorical features in this case are relevant and not equally distributed we need to vectorize them in order
+# to be able to use them during the training.
 
 num_features = [
     "duration","src_bytes",
@@ -194,56 +46,40 @@ num_features = [
     "dst_host_rerror_rate","dst_host_srv_rerror_rate"
 ]
 
-#dataset_num_features = dataset[num_features].astype(float)
+# X = dataset[num_features].astype(float).values
 
-### the problem is a binary classification problem -- we ahve to identify if is an attack or not. we don't care
-### which is the type of the attack
-
-
+# the problem is a binary classification problem -- we have to identify if is an attack or not. we don't care which is the type of the attack
 target = dataset['labels'].copy()
-target[target!='normal'] = 'attack'
+target[target != 'normal'] = 'attack'
 
-X = dataset[num_features].astype(float).values
+X = dataset.iloc[:, :-1]
+X = pd.get_dummies(X)
 
+X = X.astype(float).values ### all the columns a part from the last one
+
+# y_to_binary
 le = preprocessing.LabelEncoder()
 le.fit(target)
 binary_target = le.transform(target)
 y = binary_target
-print(y)
 
-#print(X)
-#print(y)
+# transofrming the processed dataset and creating the excel file
+# dataset['labels_binary'] = y
+# print(dataset.head(10))
+# dataset.to_excel('train.xlsx')
 
-
-#### data preprocessing
-
-
-#TODO
-
-# feature selection
-
-
-#### feature scaling
-
-from sklearn.preprocessing import StandardScaler
-
-sc = StandardScaler()
-
-# transform just of X_train
-X = sc.fit_transform(X)
-
-### checking X
-print(X[:10])
-print(X.shape)
-
-
-###### train - test split
-
-# Splitting the dataset into the Training set and Test set is not required in this case
+# data preprocessing
+# train test split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
 
-print('dataset shape {}'.format(Counter(y_train)))
+# feature scaling
+
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+sc.fit(X_train)
+X_train = sc.transform(X_train)
+X_test = sc.transform(X_test)
 
 # Get dimensions of input and output
 dimof_input = X_train.shape[1]
@@ -255,331 +91,219 @@ print('dimof_output: ', dimof_output)
 y_train = np_utils.to_categorical(y_train, dimof_output)
 y_test = np_utils.to_categorical(y_test, dimof_output)
 
-###### create the model
+print("X shape: ", X_train.shape)
+print("y shape: ", y_train.shape)
 
-
-
-
-####### KERAS MODEL
+# Keras Model
 
 # Set constants
 batch_size = 128
-dimof_middle = 100 ## number of units for each hidden layer
+dimof_middle = 100
 dropout = 0.2
-count_of_epoch = 100
-verbose = 1
-
+count_of_epoch = 10
+verbose = 0
+encoding_dim = 20
 
 print('batch_size: ', batch_size)
 print('dimof_middle: ', dimof_middle)
 print('dropout: ', dropout)
 print('countof_epoch: ', count_of_epoch)
 print('verbose: ', verbose)
+print('encoding_dim: ', encoding_dim)
 
 from keras.models import Sequential
-
-model = Sequential()
-
-#### model design
-
-#TODO
-# 1. adding autoencoders
-# 2. tuning parameters
-
+from keras.layers.normalization import BatchNormalization
 from keras.layers.core import Dense, Dropout
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import cross_val_score, KFold
+from keras.layers import Input
+from keras.models import Model
 from sklearn.metrics import confusion_matrix
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 
-
-### callbacks to improve the model
+# callbacks to improve the model
 checkpointer = ModelCheckpoint(filepath='./models/weights.hdf5', verbose=1, save_best_only=True)
-earlystopper = EarlyStopping(monitor='val_loss', min_delta=0, patience=1, verbose=1, mode='auto')
-tensorboard = TensorBoard(log_dir='./models/tensorboard/') ### command for the bash: tensorboard --logdir='./models/tensorboard/'
+earlystopper = EarlyStopping(monitor='loss', min_delta=0, patience=1, verbose=1, mode='auto')
+# command for the bash: tensorboard --logdir='./models/tensorboard/'
+tensorboard = TensorBoard(log_dir='./models/tensorboard/')
 
 
-def build_model():
+def build_model(dimof_input, dimof_output, dimof_middle, dropout):
 
-    ## sequential model because we add elements in a sequence
     model = Sequential()
 
-    """
-    
-    we can also use dropout in the beginning
-    Dropout(0.2, input_shape=X_train.shape[1:]
-    
-    """
-
-    ### dimension of input is about the number of features (like in images where the number of features correspond to the number of pixels
-    model.add(Dense(dimof_middle, input_dim=dimof_input, kernel_initializer='uniform', activation='tanh'))  ## input layer
-
-    ### it is also possible to add regularization into a layer --> kernel_regularize='l2'
+    model.add(Dense(dimof_middle, input_dim=dimof_input, kernel_initializer='uniform', activation='tanh'))
+    model.add(BatchNormalization())
 
     model.add(Dropout(dropout))
     model.add(Dense(dimof_middle, kernel_initializer='uniform', activation='tanh'))
+    model.add(BatchNormalization())
 
-    """
-    
-    DROPOUT - avoid overfitting
-    
-    randomly killing some nodes at each iteration using a certain probability. It forces the network to see 
-    more robust features. The network will not focus on just few features, because it could happen that in the next iteration 
-    this feature will not be present.
-    
-    It is a parameter to tune (30%-60%)
-    
-    """
     model.add(Dropout(dropout))
-    model.add(Dense(dimof_output, kernel_initializer='uniform', activation='softmax'))  ## output layer (in case of just 2 classes we can use sigmoid)
-    """
-    
-    managing dim_of_output
-    
-    """
+    model.add(Dense(dimof_output, kernel_initializer='uniform', activation='softmax'))
 
-    model.summary()  ## we can check our model
-    ## (none, 1) as output, because we can predict the output of many elements at the same time
-
-    W, B = model.get_weights()  ## and get the weights of the model
-
-    #### COMPILE the model --> decide which loss and optimizer to use to train the model
-
-    model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy']) ### in case of multiple classes we have to use categorical_crossentropy
+    model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['binary_accuracy'])
 
     return model
 
-
-model = build_model()
-
-##### LEARNING CURVE ON THE NUMBER OF SAMPLES
-
-
+# Learning curve
 """
+
 Before starting the tuning of the model and change it, it is better to see how many samples we need
 to perform better. After understanding the number of samples, we can start to design our model.
 
 """
 
-from sklearn.model_selection import learning_curve
-initial_weights = model.get_weights()
+def learningCurve(X_train, y_train, X_test, y_test, model, earlystopper):
 
-train_sizes = (len(X_train) * np.linspace(0.1, 0.99, 4)).astype(int) #### 4 different lenghts --> from 10% to 99%
+    initial_weights = model.get_weights()
+    train_sizes = (len(X_train) * np.linspace(0.1, 0.99, 4)).astype(int) #### 4 different lenghts --> from 10% to 99%
 
-train_scores = []
-test_scores = []
+    train_scores = []
+    test_scores = []
 
-for train_size in train_sizes:
-    X_train_frac, _, y_train_frac, _ = train_test_split(X_train, y_train, train_size=train_size)
-    model.set_weights(initial_weights)
+    for train_size in train_sizes:
 
-    h = model.fit(X_train_frac, y_train_frac, verbose=1, epochs=10, callbacks=[EarlyStopping(monitor='loss', patience=1)])
+        x_train_frac, _, y_train_frac, _ = train_test_split(X_train, y_train, train_size=train_size)
+        model.set_weights(initial_weights)
 
-    r = model.evaluate(X_train_frac, y_train_frac, verbose=0)
-    train_scores.append(r[-1])
+        # fitting the model
+        h = model.fit(x_train_frac, y_train_frac, verbose=1, epochs=10, callbacks=[earlystopper])
 
-    e = model.evaluate(X_test, y_test, verbose=0)
-    test_scores.append(e[-1])
+        # compute the train score
+        r = model.evaluate(x_train_frac, y_train_frac, verbose=0)
+        train_scores.append(r[-1])
 
-    print("Done size: ", train_size)
+        # compute the test score
+        e = model.evaluate(X_test, y_test, verbose=0)
+        test_scores.append(e[-1])
+
+        print("Done size: ", train_size)
+
+    plt.plot(train_sizes, train_scores, 'o-', label="Training Score")
+    plt.plot(train_sizes, test_scores, 'o-', label="Test Score")
+    plt.legend(loc='best')
+    plt.show()
+
+# learningCurve(X_train, y_train, X_test, y_test, model, earlystopper)
+# in this case the difference between the number of samples is not significant
+
+# model = build_model()
+# model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose, callbacks=[earlystopper])
+# model = KerasClassifier(build_fn=build_model, epochs=count_of_epoch, verbose=verbose, batch_size=batch_size)
+# cv = KFold(10, shuffle=True, random_state=0)
+# scores = cross_val_score(model, X_train, y_train, cv=cv, scoring='accuracy')
+# print("mean: ", scores.mean())
+# print("std: ", scores.std())
+# generally speaking now the model performs
 
 
-plt.plot(train_sizes, train_scores, 'o-', label="Training Score")
-plt.plot(train_sizes, test_scores, 'o-', label="Test Score")
-plt.legend(loc='best')
-plt.show()
+# Cross validation
+def cross_validation(model, X_train, y_train, splits, epochs, verbose):
 
+    scores = []
 
-### second method to do cross validation
-##model.fit(X_train, y_train, validation_split=0.2, batch_size=batch_size, epochs=1, verbose=verbose, callbacks=[checkpointer, earlystopper, tensorboard])
+    for repeat in range(splits):
 
-## needs a build function
-# model = KerasClassifier(build_fn=build_model, epochs=5, verbose=1)
+        model = build_model()
 
-#### first method to do cross validation
-# cv = KFold(3, shuffle=True)
-# scores = cross_val_score(model, X_train, y_train, cv=cv)
+        h = model.fit(X_train, y_train, validation_split=0.2, epochs=epochs, verbose=verbose)
 
-
-"""
-BATCH SIZE
-
-instead of passing one point by one (SGD), we pass a batch (16, 32, 64, 128) of points in order to speed up the computation 
-and avoid overfitting.
-
-What happens if we change the batch size?
-
-Big --> slow convergence
-
-Small --> fast convergence
-
-"""
-"""
-BATCH NORMALIZATION
-
-In order to avoid overfitting
-
-"""
-
-from keras.layers import BatchNormalization
-
-def repeated_training(X_train, y_train, X_test, y_test, units=512, activation='sigmoid', optimizer='sgd', do_bn=False, epochs=10, repeats=3):
-
-    histories = []
-
-    for repeat in range(repeats):
-        K.clear_session()
-
-        model = Sequential()
-
-        ### first layer
-        model.add(Dense(units, input_shape=X_train.shape[1:], kernel_initializer='normal', activation=activation))
-
-        if do_bn:
-            model.add(BatchNormalization)
-
-        ### second layer
-        model.add(Dense(units, kernel_initializer='normal', activation=activation))
-
-        if do_bn:
-            model.add(BatchNormalization)
-
-        ### third layer
-        model.add(Dense(units, kernel_initializer='normal', activation=activation))
-
-        if do_bn:
-            model.add(BatchNormalization)
-
-        ### output layer
-        model.add(Dense(10, activation='softmax'))
-
-        model.compile(optimizer, 'categorical_crossentropy', metrics=['accuracy'])
-
-        h = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=epochs, verbose=0)
-
-        histories.append([h.history['acc'], h.history['val_acc']])
+        scores.append(h.history['acc'])
         print(repeat, end=' ')
 
-    histories = np.array(histories)
+    scores = np.array(scores)
 
-    mean_acc = histories.mean(axis=0)
-    std_acc = histories.std(axis=0)
-    print()
+    mean_acc = scores.mean()
+    std_acc = scores.std()
 
-    #### 0 --> training ::: 1 --> test
-    return mean_acc[0], std_acc[0], mean_acc[1], std_acc[1]
+    return mean_acc, std_acc
 
+model = build_model(dimof_input=dimof_input, dimof_output=dimof_output, dropout=0.2, dimof_middle=dimof_middle)
 
-#### Now we can compare between the model trained with batch normalization and the one without
-
-
-mean_acc, std_acc, mean_acc_val, std_acc_val = repeated_training(X_train, y_train, X_test, y_test, do_bn=False)
-
-mean_acc_bn, std_acc_bn, mean_acc_val_bn, std_acc_val_bn = repeated_training(X_train, y_train, X_test, y_test, do_bn=True)
-
-### and now we plot all the results
-### speed up the training and increase also generalization
-
-
-def plot_mean_std(m, s):
-    plt.plot(m)
-    plt.fill_between(range(len(m)), m-s, m+s, alpha=0.1)
-
-plot_mean_std(mean_acc, std_acc)
-plot_mean_std(mean_acc_val, std_acc_val)
-plot_mean_std(mean_acc_bn, std_acc_bn)
-plot_mean_std(mean_acc_val_bn, std_acc_val_bn)
-
-plt.ylim(0, 1.01)
-plt.title("Batch Normalization Accuracy")
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.legend(['Train', 'Test', 'Train_bn', 'Test_bn'])
-
-plt.show()
-
-
-
-###### validate the model and tune the parameters
+print("Model Summary")
+model.summary()
 
 """
-we can tune many different things:
-
-    learning rate
-    optimizer
-    weights initialization
-    batch size...
-
+print("Cross Validation score")
+mean_acc, std_acc = cross_validation(model=model, X_train=X_train, y_train=y_train, splits=10, epochs=count_of_epoch, verbose=verbose)
+print("mean: ", mean_acc)
+print("std: ", std_acc)
 """
 
-#TODO
 
-# hyperparameter search
+# The problem with this method of evaluation is that Keras doesnt't have other metrics a part from accuracy
+"""print("Hold Out Score")
+model.fit(X_train, y_train, validation_split=0.2, epochs=count_of_epoch, verbose=0, batch_size=batch_size)
+result = model.evaluate(X_test, y_test, batch_size=batch_size)
+print(result)"""
 
-# tune the parameters (gridsearch, random, bayesian... for keras)
-
-
-###### predict
-
-## exactly as in scikitlearn
-## model.predict(X_test).ravel() --> to flat the column into array
-
-
-### prediction, but are probabilities to belong to the class
+model.fit(X_train, y_train, validation_split=0.2, epochs=count_of_epoch, verbose=0, batch_size=batch_size)
 y_pred = model.predict(X_test)
-y_pred_classes = np.argmax(y_pred, axis=1)
-y_test_classes = np.argmax(y_test, axis=1)
 
+# transforming pred and test into an array to get the classification report
+y_pred_clas = np.argmax(y_pred, axis=1)
+y_test_clas = np.argmax(y_test, axis=1)
 
-#### classification report
-
-from sklearn.metrics import classification_report
-
-print(classification_report(y_test_classes, y_pred_classes))
-
-#### Confusion Matrix
-
+print("Confusion Matrix")
 def custom_confusion_matrix(y_true, y_pred, labels=["False", "True"]):
+
     cm = confusion_matrix(y_true, y_pred)
     pred_labels = ["Predicted " + l for l in labels]
     df = pd.DataFrame(cm, index=labels, columns=pred_labels)
     return df
 
+print(custom_confusion_matrix(y_test_clas, y_pred_clas, ['Attack', 'Normal']))
 
-print(custom_confusion_matrix(y_test, y_pred_classes, ['Attack', 'Normal']))
+print("Classification Report")
+print(classification_report(y_test_clas, y_pred_clas))
 
-result = model.evaluate(X_test, y_test, batch_size=batch_size)
+# trying to use the autoencoder
 
-print(result)
+def build_ae(dimof_input, encoding_dim, count_of_epoch, batch_size, X_train, verbose):
 
-### visualizing the layers of the model
-print(model.layers)
-inp = model.layers[0].input
-out = model.layers[0].output
+    input_layer = Input(shape=(dimof_input,))
 
-print(inp) ### tensors
-print(out)
+    encoded1 = Dense(50, activation='relu')(input_layer)
+    encoded2 = Dense(30, activation='relu')(encoded1)
+    encoded3 = Dense(encoding_dim, activation='relu')(encoded2)
 
+    decoded1 = Dense(30, activation='relu')(encoded3)
+    decoded2 = Dense(50, activation='relu')(decoded1)
+    decoded3 = Dense(dimof_input, activation='relu')(decoded2)
 
-#### MULTIPLE CLASS CLASSIFICATION
-"""
+    autoencoder = Model(inputs=input_layer, outputs=decoded3)
 
-In the case that we have to separate all the different classes, 
-we need to define in output layer the number of classes.
+    autoencoder.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    autoencoder.fit(X_train, X_train, epochs=count_of_epoch, batch_size=batch_size, shuffle=True, verbose=verbose)
 
-target_names = dataset['labels'].unique()
-print(target_names)
+    encoder = Model(inputs=input_layer, outputs=encoded3)
+    encoded_out = encoder.predict(X_train)
 
-target_dict = {n:i for i,n in enumerate(target_name)}
-print(target_dict)
+    return encoded_out
 
-y = dataset['labels'].map(target_dict)
-print(y.head())
+X_train_ae = build_ae(dimof_input=dimof_input, encoding_dim=encoding_dim, count_of_epoch=count_of_epoch, batch_size=batch_size, X_train=X_train, verbose=verbose)
+X_test_ae = build_ae(dimof_input=dimof_input, encoding_dim=encoding_dim, count_of_epoch=count_of_epoch, batch_size=batch_size, X_train=X_test, verbose=verbose)
 
-y_cat = to_categorical(y)
-print(y_cat[:10]) ## first ten rows
+model_ae = build_model(dimof_input=encoding_dim, dimof_output=dimof_output, dropout=0.2, dimof_middle=dimof_middle)
 
+model_ae.fit(X_train_ae, y_train, validation_split=0.2, epochs=count_of_epoch, verbose=0, batch_size=batch_size)
+y_pred = model_ae.predict(X_test_ae)
 
-"""
+# transforming pred and test into an array to get the classification report
+y_pred_clas = np.argmax(y_pred, axis=1)
+y_test_clas = np.argmax(y_test, axis=1)
 
+print("Confusion Matrix")
+def custom_confusion_matrix(y_true, y_pred, labels=["False", "True"]):
+
+    cm = confusion_matrix(y_true, y_pred)
+    pred_labels = ["Predicted " + l for l in labels]
+    df = pd.DataFrame(cm, index=labels, columns=pred_labels)
+    return df
+
+print(custom_confusion_matrix(y_test_clas, y_pred_clas, ['Attack', 'Normal']))
+
+print("Classification Report")
+print(classification_report(y_test_clas, y_pred_clas))
 
